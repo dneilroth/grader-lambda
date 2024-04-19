@@ -90,9 +90,17 @@ func handler(ctx context.Context, event events.LambdaFunctionURLRequest) (events
 		}, err
 	}
 
+	response, err := json.Marshal(string(body))
+	if err != nil {
+		return events.LambdaFunctionURLResponse{
+			StatusCode: 500,
+			Body:       "Error creating response JSON",
+			Headers:    map[string]string{"Content-Type": "application/json"},
+		}, nil
+	}
 	return events.LambdaFunctionURLResponse{
 		StatusCode: 200,
-		Body:       string(body),
+		Body:       string(response),
 		Headers:    map[string]string{"Content-Type": "application/json"},
 	}, nil
 }
