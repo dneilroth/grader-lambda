@@ -37,12 +37,45 @@ func handler(ctx context.Context, event events.LambdaFunctionURLRequest) (events
 			Headers:    map[string]string{"Content-Type": "application/json"},
 		}, err
 	}
+	headers := map[string]string{
+		"content-type":    "application/json",
+		"accept":          "*/*",
+		"sec-fetch-site":  "same-origin",
+		"accept-language": "en-US,en;q=0.9",
+		"sec-fetch-mode":  "cors",
+		"origin":          "https://google.com",
+		"user-agent":      "Mozilla/5.0 (iPhone; CPU iPhone OS 16_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+		"referer":         "https://google.com/",
+		"sec-fetch-dest":  "empty",
+	}
 
-	resp, err := http.Get(url.URL)
+	req, err := http.NewRequest("GET", url.URL, nil)
+	if err != nil {
+		return events.LambdaFunctionURLResponse{
+			StatusCode: 500,
+			Body:       "unable to create request",
+			Headers:    map[string]string{"Content-Type": "application/json"},
+		}, err
+	}
+
+	for k, h := range headers {
+		req.Header.Add(k, h)
+	}
+
 	if err != nil {
 		return events.LambdaFunctionURLResponse{
 			StatusCode: 500,
 			Body:       "unable to make request to URL",
+			Headers:    map[string]string{"Content-Type": "application/json"},
+		}, err
+	}
+	// Create a client and execute the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return events.LambdaFunctionURLResponse{
+			StatusCode: 500,
+			Body:       "error making request",
 			Headers:    map[string]string{"Content-Type": "application/json"},
 		}, err
 	}
@@ -57,17 +90,9 @@ func handler(ctx context.Context, event events.LambdaFunctionURLRequest) (events
 		}, err
 	}
 
-	response, err := json.Marshal(body)
-	if err != nil {
-		return events.LambdaFunctionURLResponse{
-			StatusCode: 500,
-			Body:       "Error creating response JSON",
-			Headers:    map[string]string{"Content-Type": "application/json"},
-		}, nil
-	}
 	return events.LambdaFunctionURLResponse{
 		StatusCode: 200,
-		Body:       string(response),
+		Body:       string(body),
 		Headers:    map[string]string{"Content-Type": "application/json"},
 	}, nil
 }
